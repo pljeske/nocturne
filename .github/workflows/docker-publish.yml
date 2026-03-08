@@ -55,6 +55,9 @@ jobs:
         working-directory: src/Web/packages/bridge
         run: pnpm run build
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -101,7 +104,8 @@ jobs:
             -p:PublishProfile=DefaultContainer \
             -p:ContainerRegistry=${{ env.REGISTRY }} \
             -p:ContainerRepository=${{ env.IMAGE_REPOSITORY }}/nocturne-api \
-            -p:ContainerImageTag=${{ steps.version.outputs.version }}
+            -p:ContainerImageTag=${{ steps.version.outputs.version }} \
+            -p:ContainerRuntimeIdentifiers="linux-x64;linux-arm64"
 
       # Build web app using standard Docker build (Node.js/Vite apps don't use .NET container publishing)
       - name: Build and push Nocturne.Web container
@@ -178,7 +182,7 @@ jobs:
           EOF
 
           docker buildx build \
-            --platform linux/amd64 \
+            --platform linux/amd64,linux/arm64 \
             --tag ${{ env.REGISTRY }}/${{ env.IMAGE_REPOSITORY }}/nocturne-web:${{ steps.version.outputs.version }} \
             --file Dockerfile.web \
             --push \
